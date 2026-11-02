@@ -106,6 +106,12 @@ if [ -z "$JAVA_OPTS_SCRIPT" ] ; then
     JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 fi
 
+# Lucene's SIMD distance functions (vector and full-text indexes) need the incubating Vector API.
+# Added only when this Java has the module, so runtimes without it still start.
+if "$JAVA" --add-modules jdk.incubator.vector -version >/dev/null 2>&1; then
+    JAVA_OPTS_SCRIPT="$JAVA_OPTS_SCRIPT --add-modules jdk.incubator.vector"
+fi
+
 # ORIENTDB SETTINGS LIKE DISKCACHE, ETC
 if [ -z "$ORIENTDB_SETTINGS" ]; then
     ORIENTDB_SETTINGS="" # HERE YOU CAN PUT YOUR DEFAULT SETTINGS
