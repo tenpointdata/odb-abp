@@ -22,7 +22,7 @@ LABEL org.opencontainers.image.title="OrientDB TinkerPop 3" \
       org.opencontainers.image.description="OrientDB multi-model database server with Gremlin Server" \
       org.opencontainers.image.licenses="Apache-2.0"
 
-# The server doesn't need root. A fixed id keeps the ownership of mounted volumes predictable.
+# The server runs as this user. A fixed id keeps the ownership of mounted volumes predictable.
 RUN groupadd --system --gid 2424 orientdb \
       && useradd --system --uid 2424 --gid orientdb --home-dir /orientdb --no-create-home orientdb
 
@@ -39,7 +39,10 @@ ENV ORIENTDB_OPTS_MEMORY="-XX:InitialRAMPercentage=50 -XX:MaxRAMPercentage=50"
 # Keep heap dumps out of the image layer, next to the logs
 ENV JAVA_OPTS="-XX:HeapDumpPath=/orientdb/log"
 
-USER orientdb
+# Starts as root to take over volumes written by older images (which ran as root), then runs the
+# server as orientdb; see docker-entrypoint.sh
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 VOLUME ["/orientdb/backup", "/orientdb/databases", "/orientdb/config"]
 
