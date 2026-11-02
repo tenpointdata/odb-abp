@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.LongSupplier;
 
 public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOps {
   private static final OLoggerDistributed logger =
@@ -70,7 +71,18 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       int minimumQuorum,
       ODatabaseStateChangeListener listener,
       ONodeStateUpdated updateLister) {
-    this.topology = new OTopologyManager(current, groupId, minimumQuorum);
+    this(current, groupId, minimumQuorum, listener, updateLister, System::nanoTime);
+  }
+
+  /** @param nanoTime source of {@link System#nanoTime()} values, used to detect offline nodes */
+  public OCoordinatedDistributedOpsImpl(
+      ONodeId current,
+      OGroupId groupId,
+      int minimumQuorum,
+      ODatabaseStateChangeListener listener,
+      ONodeStateUpdated updateLister,
+      LongSupplier nanoTime) {
+    this.topology = new OTopologyManager(current, groupId, minimumQuorum, nanoTime);
     this.sequenceManager = new OTransactionSequenceManager(current, 3);
     this.promised = new OPromisedDistributedOpsImpl();
     this.coordination = new HashMap<>();
