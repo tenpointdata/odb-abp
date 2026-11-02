@@ -50,6 +50,16 @@ sql() { # container database command: prints the JSON response
       -H 'Content-Type: application/json' --data-binary @-
 }
 
+# rebuilds every Lucene index of the databases used by queries.txt
+rebuild_lucene() { # container
+  for db in $(cut -f1 "$HERE/queries.txt" | sort -u); do
+    for index in $(sql "$1" "$db" "select name from (select expand(indexes) from metadata:indexmanager) where algorithm = 'LUCENE'" |
+      python3 -c 'import json,sys; print(" ".join(r["name"] for r in json.load(sys.stdin).get("result", [])))'); do
+      echo "rebuild Lucene index $db.$index: $(sql "$1" "$db" "rebuild index \`$index\`" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["totalIndexed"] if "result" in d else "ERROR " + d["errors"][0]["content"][:200])')"
+    done
+  done
+}
+
 # runs every query of queries.txt over HTTP and prints normalized results
 rest_queries() { # container
   while IFS=$'\t' read -r db query; do
@@ -104,14 +114,9 @@ log "new server on the old databases and configuration: $NEW"
 start "$NAME-new" "$NEW" || { docker logs "$NAME-new" >"$OUT/new-server.log" 2>&1; exit 1; }
 docker logs "$NAME-new" 2>&1 | grep -m1 "is starting up"
 
-# Upgrade step (see docs/overhaul/upgrading-from-3.2.md): OrientDB 3.x writes Lucene 7 indexes,
-# which 4.0 can't read, so every Lucene index is rebuilt from its records.
-for db in $(cut -f1 "$HERE/queries.txt" | sort -u); do
-  for index in $(sql "$NAME-new" "$db" "select name from (select expand(indexes) from metadata:indexmanager) where algorithm = 'LUCENE'" |
-    python3 -c 'import json,sys; print(" ".join(r["name"] for r in json.load(sys.stdin).get("result", [])))'); do
-    echo "rebuild Lucene index $db.$index: $(sql "$NAME-new" "$db" "rebuild index \`$index\`" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["totalIndexed"] if "result" in d else "ERROR " + d["errors"][0]["content"][:200])')"
-  done
-done
+# Upgrade step (see section 5 of docs/overhaul/2026-11-audit.md): OrientDB 3.x writes Lucene 7
+# indexes, which 4.0 can't read, so every Lucene index is rebuilt from its records.
+rebuild_lucene "$NAME-new"
 
 rest_queries "$NAME-new" >"$OUT/new.txt"
 if diff "$OUT/old.txt" "$OUT/new.txt" >"$OUT/diff.txt"; then
@@ -125,7 +130,9 @@ binary_count "$OLD" "$NAME-new" && echo "old console -> new server: ok" || fail 
 docker exec "$NAME-new" console.sh "connect remote:localhost/compat root $PW; insert into Person set uid = 5000, name = 'new'; create edge Knows from (select from Person where uid = 5000) to (select from Person where uid = 0);" >"$OUT/write.log" 2>&1 ||
   fail "write on new server (see $OUT/write.log)"
 docker logs "$NAME-new" >"$OUT/new-server.log" 2>&1
-grep -E "SEVER|not closed properly|Exception" "$OUT/new-server.log" | grep -v "^\s*at " | head -10 >"$OUT/new-server-problems.txt"
+# the messages asking to rebuild 3.x Lucene indexes are expected until the rebuild step
+grep -E "SEVER|not closed properly|Exception" "$OUT/new-server.log" | grep -v "^\s*at " |
+  grep -vE "was written by an older OrientDB release|IndexFormatTooOldException" | head -10 >"$OUT/new-server-problems.txt"
 if [ -s "$OUT/new-server-problems.txt" ]; then
   fail "problems in new server log:"
   cat "$OUT/new-server-problems.txt"
@@ -136,11 +143,13 @@ docker stop -t 60 "$NAME-new" >/dev/null
 docker rm "$NAME-new" >/dev/null
 BEFORE_ROLLBACK=$FAILED
 if start "$NAME-old" "$OLD"; then
+  # Lucene indexes rebuilt by the new release are in a format the old one can't read
+  rebuild_lucene "$NAME-old"
   rest_queries "$NAME-old" >"$OUT/rollback.txt"
   if grep -q ERROR "$OUT/rollback.txt"; then
     echo "WARNING: rollback to $OLD can't read the data: $(grep -m1 ERROR "$OUT/rollback.txt" | cut -c1-200)"
   else
-    echo "rollback to $OLD: reads the data ($(grep -c . "$OUT/rollback.txt") queries answered)"
+    echo "rollback to $OLD: all $(grep -c . "$OUT/rollback.txt") queries answered after rebuilding the Lucene indexes"
   fi
 else
   FAILED=$BEFORE_ROLLBACK # rollback is reported, not required
