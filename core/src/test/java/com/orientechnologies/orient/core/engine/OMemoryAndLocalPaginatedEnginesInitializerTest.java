@@ -35,6 +35,19 @@ public class OMemoryAndLocalPaginatedEnginesInitializerTest {
     assertThat(calculate(16 * GB, "12t")).isEqualTo(16 * GB);
   }
 
+  @Test
+  public void diskCacheLeavesHeapAndDirectMemoryPoolOut() {
+    // a 64GB container with a 16GB heap and the default 2g left and 1GB pool
+    assertThat(
+            initializer.calculateDiskCacheSizeInMB(
+                64 * GB, "memory.leftToContainer", "2g", 16 * GB, GB))
+        .isEqualTo(45 * 1024);
+    // too small: negative, the caller falls back to the minimal cache
+    assertThat(
+            initializer.calculateDiskCacheSizeInMB(2 * GB, "memory.leftToContainer", "2g", GB, GB))
+        .isNegative();
+  }
+
   private long calculate(long memoryLimit, String memoryLeft) {
     return initializer.calculateMemoryLeft(memoryLimit, "memory.leftToOS", memoryLeft);
   }
