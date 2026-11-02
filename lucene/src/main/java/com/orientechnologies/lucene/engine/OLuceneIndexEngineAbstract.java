@@ -65,6 +65,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexFormatTooOldException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -449,6 +450,14 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     if (closed.get()) {
       try {
         reOpen();
+      } catch (final IndexFormatTooOldException e) {
+        // OrientDB 3.x writes Lucene 7 indexes, which this Lucene version can't read. The index
+        // holds no data of its own: rebuilding it from the records recreates it. Not thrown: this
+        // also runs while the index is deleted to be rebuilt.
+        logger.error(
+            "Lucene index '%s' was written by an older OrientDB release and can't be read: rebuild"
+                + " it with REBUILD INDEX `%s`",
+            e, indexName(), indexName());
       } catch (final IOException e) {
         logger.error("error while opening closed index: %s ", e, indexName());
       }
