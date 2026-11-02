@@ -145,7 +145,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     }
   }
 
-  private long calculateMemoryLeft(long memoryLimit, String parameter, String memoryLeft) {
+  long calculateMemoryLeft(long memoryLimit, String parameter, String memoryLeft) {
     if (memoryLeft == null) {
       warningInvalidMemoryLeftValue(parameter, null);
       return memoryLimit;
@@ -174,7 +174,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
         return memoryLimit;
       }
 
-      return (int) ((memoryLimit * (100.0 - percent)) / 100.0);
+      return (long) ((memoryLimit * (100.0 - percent)) / 100.0);
     } else if (lastChar == 'b') {
       final String bytesValue = memoryLeft.substring(0, memoryLeft.length() - 1);
       final long bytes;
@@ -251,6 +251,6 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   private void warningInvalidMemoryLeftValue(String parameter, String memoryLeft) {
     logger.warnNoDb(
         "Invalid value of '%s' parameter ('%s') memory limit will not be decreased",
-        memoryLeft, parameter);
+        parameter, memoryLeft);
   }
 }

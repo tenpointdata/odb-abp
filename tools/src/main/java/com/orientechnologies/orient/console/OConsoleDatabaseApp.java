@@ -85,7 +85,6 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
@@ -3285,9 +3284,11 @@ public class OConsoleDatabaseApp extends OConsoleApplication
   }
 
   protected ODocument getDistributedConfiguration() {
-    if (currentDatabase != null) {
-      final OStorage stg = currentDatabase.getStorage();
-      if (stg instanceof ORemoteClient) return ((ORemoteClient) stg).getClusterConfiguration();
+    // a remote database has no storage: it exposes the client that holds the cluster configuration
+    if (currentDatabase instanceof ODatabaseDocumentRemote) {
+      return ((ODatabaseDocumentRemote) currentDatabase)
+          .getRemoteClient()
+          .getClusterConfiguration();
     }
     return null;
   }

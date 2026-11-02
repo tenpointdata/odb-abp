@@ -1173,8 +1173,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   private void runShutdownInNonDaemonThread() {
+    // Not in the thread group of the network threads (which a new thread would inherit): the
+    // engine interrupts that group while shutting down, which would interrupt this thread while
+    // it flushes and closes the storages, leaving them to be recovered on the next start.
     Thread shutdownThread =
-        new Thread("OrientDB server shutdown thread") {
+        new Thread(server.getServerThreadGroup(), "OrientDB server shutdown thread") {
           public void run() {
             server.shutdown();
           }

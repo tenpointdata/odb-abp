@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OServerMain {
   private static final OLogger logger = OLogManager.instance().logger(OServerMain.class);
@@ -41,6 +42,8 @@ public class OServerMain {
   }
 
   public static void main(final String[] args) throws Exception {
+    final AtomicBoolean cleanShutdown = new AtomicBoolean(false);
+
     // STARTS ORIENTDB IN A NON DAEMON THREAD TO PREVENT EXIT
     final Thread t =
         new Thread() {
@@ -50,6 +53,7 @@ public class OServerMain {
               instance = OServerMain.create();
               instance.startup().activate();
               instance.waitForShutdown();
+              cleanShutdown.set(true);
             } catch (Exception e) {
               logger.error("Error during server execution", e);
             }
@@ -60,6 +64,7 @@ public class OServerMain {
 
     t.start();
     t.join();
-    System.exit(1);
+    // A non-zero status lets service supervisors tell a failure from a requested shutdown
+    System.exit(cleanShutdown.get() ? 0 : 1);
   }
 }
