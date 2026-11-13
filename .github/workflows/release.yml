@@ -10,21 +10,23 @@ permissions:
 
 jobs:
   publish:
+    # The Maven coordinates and publishing credentials belong to upstream.
+    if: github.repository == 'orientechnologies/orientdb' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v6
         with:
-          java-version: '8'
-          distribution: 'adopt'
+          java-version: '17'
+          distribution: 'temurin'
           server-id: sonatype-nexus-staging
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish Release
-        run: mvn --batch-mode --no-transfer-progress deploy -DskipTests -DperformRelease -DcreateChecksum=true 
+        run: mvn --batch-mode --no-transfer-progress deploy -DskipTests -DperformRelease -DcreateChecksum=true
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
