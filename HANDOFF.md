@@ -1,4 +1,4 @@
-# atomicbeanpizza: HANDOFF
+# OrientDB ABP handoff
 
 **Last updated:** 2026-11-12, Java CI and distribution validation.
 
@@ -36,12 +36,10 @@ On 2026-11-12, the CI change was prepared from `develop` at `a13262f5`. It remov
 ## 5. Triage
 
 **Agents can pick up:**
-- [#1](https://github.com/tenpointdata/odb-abp/issues/1) — M — Verify the branch build and artifact, then record the selected fork-owned destination and gates before configuring publication.
-- [PR #4](https://github.com/tenpointdata/odb-abp/pull/4) — M — Review the exact candidate and validate the hosted checks.
 - [#5](https://github.com/tenpointdata/odb-abp/issues/5) — S — Run Studio build, typecheck and ETL smoke test on its development branch.
 
 **Needs a human:**
-- [#1](https://github.com/tenpointdata/odb-abp/issues/1) — S — Identify the owned artifact destination and publishing identity when fork releases are wanted.
+- [#1](https://github.com/tenpointdata/odb-abp/issues/1) — M — Identify the owned artifact destination and publishing identity before configuring fork releases.
 
 **Blocked or waiting:**
 - [#2](https://github.com/tenpointdata/odb-abp/issues/2) — M — Studio change acceptance waits on #5.
@@ -54,12 +52,10 @@ Use JDK 17 or later and Maven 3.7 or later. Run `mvn -B package -P all --file po
 
 - [#1](https://github.com/tenpointdata/odb-abp/issues/1) — Fork validation and any separately configured fork-owned release destination.
 - [#2](https://github.com/tenpointdata/odb-abp/issues/2), [#5](https://github.com/tenpointdata/odb-abp/issues/5), [#6](https://github.com/tenpointdata/odb-abp/issues/6), [#7](https://github.com/tenpointdata/odb-abp/issues/7) — Studio ETL editor qualification and fixes.
-- [PR #3](https://github.com/tenpointdata/odb-abp/pull/3) — Draft engineering standards and maintenance guide.
-- [PR #4](https://github.com/tenpointdata/odb-abp/pull/4) — Operations candidate checks and source integration.
 
 ## 8. Known issues and gotchas
 
-The upgrade audit in PR #4 describes a standalone 3.2.42 compatibility and rollback rehearsal. Cluster qualification and upgrade timing need separate evidence before deployment. The project POM retains upstream Maven coordinates and dependency resolution.
+The upgrade audit in PR #4 describes a standalone 3.2.42 compatibility and rollback rehearsal. Cluster qualification and upgrade timing need separate evidence before deployment. The project POM retains upstream Maven coordinates and dependency resolution. [PR #3](https://github.com/tenpointdata/odb-abp/pull/3) contains the draft engineering guide. [PR #4](https://github.com/tenpointdata/odb-abp/pull/4) contains the operations candidate.
 
 ## 9. Decisions
 
