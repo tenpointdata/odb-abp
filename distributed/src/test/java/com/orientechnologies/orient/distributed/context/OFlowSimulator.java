@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateUpdated {
 
@@ -40,6 +41,8 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
   private Map<ONodeId, TestOperationContext> contexts = new HashMap<>();
   private final int networkInitQuorum;
   private int nodeSeq = 0;
+  // the simulated nodes read this clock instead of System.nanoTime(), see advanceTime
+  private long nanoTime = 0;
 
   public OFlowSimulator(int networkInitQuorum) {
     this.networkInitQuorum = networkInitQuorum;
@@ -291,7 +294,9 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
 
   public ONodeId bootNode() {
     var nodeId = newNodeIdSeq();
-    var ops = new OCoordinatedDistributedOpsImpl(nodeId, group, networkInitQuorum, this, this);
+    var ops =
+        new OCoordinatedDistributedOpsImpl(
+            nodeId, group, networkInitQuorum, this, this, () -> nanoTime);
     var action = ops.nodeJoinStart(nodeId, bootNetworkState(), false);
     if (action instanceof ODiscoverAction.OEstablishAction) {
       // I'm alone and quorum 1 I create a network with only myself.
@@ -336,6 +341,10 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
 
   public Map<ONodeId, TestOperationContext> getContexts() {
     return contexts;
+  }
+
+  public void advanceTime(long millis) {
+    nanoTime += TimeUnit.MILLISECONDS.toNanos(millis);
   }
 
   public boolean checkOffline(int timeMills) {

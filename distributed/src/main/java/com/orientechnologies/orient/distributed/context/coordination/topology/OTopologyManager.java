@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.LongSupplier;
 
 public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetworkTopology {
   private static final OLoggerDistributed logger =
@@ -42,8 +43,16 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   private final OVersionPromise versionPromise;
   private Map<ONodeId, ONodeInfo> membersInfo = new HashMap<>();
   private Map<String, ONodeId> membersByName = new HashMap<>();
+  // source of System.nanoTime() values for the liveness of members, replaceable in tests
+  private final LongSupplier nanoTime;
 
   public OTopologyManager(ONodeId current, OGroupId groupId, int minimumQuorum) {
+    this(current, groupId, minimumQuorum, System::nanoTime);
+  }
+
+  public OTopologyManager(
+      ONodeId current, OGroupId groupId, int minimumQuorum, LongSupplier nanoTime) {
+    this.nanoTime = nanoTime;
     this.current = current;
     this.groupId = groupId;
     this.minimumQuorum = minimumQuorum;
@@ -96,7 +105,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
       }
-      this.membersInfo.put(toRegister, new ONodeInfo());
+      this.membersInfo.put(toRegister, new ONodeInfo(nanoTime));
       this.membersByName.put(toRegister.getNode(), toRegister);
     }
     this.versionPromise.accept(promise, version);
@@ -161,7 +170,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
     for (var member : members) {
       var info = this.membersInfo.get(member);
       if (info == null) {
-        info = new ONodeInfo();
+        info = new ONodeInfo(nanoTime);
       }
       newNodesInfo.put(member, info);
     }
@@ -357,7 +366,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
       }
-      this.membersInfo.put(node, new ONodeInfo());
+      this.membersInfo.put(node, new ONodeInfo(nanoTime));
       this.membersByName.put(node.getNode(), node);
     }
     this.versionPromise.forceVersion(version);
