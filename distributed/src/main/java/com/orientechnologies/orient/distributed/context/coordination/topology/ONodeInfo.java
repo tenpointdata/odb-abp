@@ -7,6 +7,10 @@ public class ONodeInfo {
   private final LongSupplier nanoTime;
   private volatile long lastReceivedNotification;
 
+  public ONodeInfo() {
+    this(System::nanoTime);
+  }
+
   public ONodeInfo(LongSupplier nanoTime) {
     this.nanoTime = nanoTime;
     lastReceivedNotification = nanoTime.getAsLong();
