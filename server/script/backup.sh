@@ -54,9 +54,12 @@ export ORIENTDB_HOME
 if [ "$#" != "5" ] || [ "$5" = "default" ]
 then
 	sh ./console.sh "connect $DB $USER $PASSWD;freeze database;backup database $DEST_BACKUP;release database;" 1> $ECHO_PATH
-  	if [ "$?" -ne "0" ]; then
+	BACKUP_STATUS=$?
+  	if [ "$BACKUP_STATUS" -ne "0" ]; then
+	    # release the database in case the backup failed while it was frozen, but report the
+	    # backup failure: a scheduled backup must not look successful when it wasn't
 	    sh ./console.sh "connect $DB $USER $PASSWD;release database;" 1> $ECHO_PATH
-	    exit $?
+	    exit $BACKUP_STATUS
 	fi
 	exit 0 
 fi

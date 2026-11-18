@@ -1,0 +1,16 @@
+compat	select count(*) as c from Person
+compat	select count(*) as c from Knows
+compat	select uid, name, tags from Person where uid = 1234
+compat	select count(*) as c from Person where name = 'p77'
+compat	select count(*) as c from Person where born = date('2000-01-11 00:00:00').asLong()
+compat	select count(*) as c from Person where SEARCH_CLASS('charlie') = true
+compat	select out('Knows').size() as d from Person where uid = 0
+compat	select in('Knows').size() as d from Person where uid = 700
+compat	select count(*) as c from (match {class: Person, where: (uid = 0)}.out('Knows'){as: f, where: (since = 2000)} return f)
+compat	select sum(since) as s from Knows
+compat	select twice(21) as r
+compat	select name, type from (select expand(indexes) from metadata:indexmanager) order by name
+demodb	select count(*) as c from V
+demodb	select count(*) as c from E
+demodb	select @class as cls, count(*) as c from V group by @class order by cls
+demodb	select count(*) as c from (match {class: Profiles, as: p}-HasFriend->{as: f} return p, f)

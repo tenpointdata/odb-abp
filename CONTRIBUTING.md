@@ -10,8 +10,8 @@
 
 ## Prerequisites
 
-A Java JDK version 8 or later is needed.  
-Maven 3.5 or later is needed.  
+A Java JDK version 17 or later is needed (the code is compiled for Java 17 and tested on 17, 21 and 25).  
+Maven 3.7 or later is needed, or use the bundled wrapper (`./mvnw`).  
 
 ## Build 
 
@@ -49,7 +49,7 @@ To produce the community distribution just run
 mvn clean install
 ```  
 
-this command will produce two files `distribution/target/orientdb-community-(version).tar.gz` `distribution/target/orientdb-community-(version).zip`
+this command will produce two files `packages/community/target/orientdb-community-(version).tar.gz` `packages/community/target/orientdb-community-(version).zip`
 
 ## Opening a issue
 

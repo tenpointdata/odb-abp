@@ -22,12 +22,8 @@ package com.orientechnologies.common.jnr;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Paths;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.management.AttributeNotFoundException;
@@ -42,8 +38,6 @@ import jnr.posix.POSIXFactory;
 import jnr.posix.RLimit;
 
 public class ONative {
-  private static final String DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/cgroup/memory";
-
   private static final OLogger logger = OLogManager.instance().logger(ONative.class);
   private static volatile ONative instance = null;
   private static final Lock initLock = new ReentrantLock();
@@ -173,34 +167,12 @@ public class ONative {
         }
       }
 
-      final String memoryCGroupPath = findMemoryGCGroupPath();
-      if (memoryCGroupPath != null) {
-        if (printSteps) {
-          logger.infoNoDb("Path to 'memory' cgroup is '%s'", memoryCGroupPath);
-        }
-        final String memoryCGroupRoot = findMemoryGCRoot();
-
-        if (printSteps) {
-          logger.infoNoDb("Mounting path for memory cgroup controller is '%s'", memoryCGroupRoot);
-        }
-
-        File memoryCGroup = new File(memoryCGroupRoot, memoryCGroupPath);
-        if (!memoryCGroup.exists()) {
-          if (printSteps) {
-            logger.infoNoDb(
-                "Can not find '%s' path for memory cgroup, it is supposed that process is"
-                    + " running in container, will try to read root '%s' memory cgroup data",
-                memoryCGroup, memoryCGroupRoot);
-          }
-          memoryCGroup = new File(memoryCGroupRoot);
-          insideContainer = true;
-        }
-
-        final long softMemoryLimit = fetchCGroupSoftMemoryLimit(memoryCGroup, printSteps);
-        memoryLimit = updateMemoryLimit(memoryLimit, softMemoryLimit);
-
-        final long hardMemoryLimit = fetchCGroupHardMemoryLimit(memoryCGroup, printSteps);
-        memoryLimit = updateMemoryLimit(memoryLimit, hardMemoryLimit);
+      final OCGroupMemoryLimits.Result cgroup =
+          new OCGroupMemoryLimits(Paths.get("/")).detect(printSteps);
+      if (cgroup != null) {
+        insideContainer = cgroup.insideContainer;
+        memoryLimit = updateMemoryLimit(memoryLimit, cgroup.softLimit);
+        memoryLimit = updateMemoryLimit(memoryLimit, cgroup.hardLimit);
       }
     }
 
@@ -231,191 +203,6 @@ public class ONative {
     }
 
     return memoryLimit;
-  }
-
-  private long fetchCGroupSoftMemoryLimit(final File memoryCGroup, final boolean printSteps) {
-    final File softMemoryCGroupLimit = new File(memoryCGroup, "memory.soft_limit_in_bytes");
-    if (softMemoryCGroupLimit.exists()) {
-      try {
-        final FileReader memoryLimitReader = new FileReader(softMemoryCGroupLimit);
-        try (final BufferedReader bufferedMemoryLimitReader =
-            new BufferedReader(memoryLimitReader)) {
-          try {
-            final String cgroupMemoryLimitValueStr = bufferedMemoryLimitReader.readLine();
-            try {
-              final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
-
-              if (printSteps)
-                logger.infoNoDb(
-                    "cgroup soft memory limit is %d B/%d MB/%d GB",
-                    cgroupMemoryLimitValue,
-                    convertToMB(cgroupMemoryLimitValue),
-                    convertToGB(cgroupMemoryLimitValue));
-
-              return cgroupMemoryLimitValue;
-            } catch (final NumberFormatException nfe) {
-              if (cgroupMemoryLimitValueStr.matches("\\d+")) {
-                if (printSteps) {
-                  logger.infoNoDb("cgroup soft memory limit is not set");
-                }
-              } else {
-                logger.errorNoDb(
-                    "Can not read memory soft limit for cgroup '%s'", nfe, memoryCGroup);
-              }
-            }
-          } catch (final IOException ioe) {
-            logger.errorNoDb("Can not read memory soft limit for cgroup '%s'", ioe, memoryCGroup);
-          }
-        } catch (final IOException e) {
-          logger.errorNoDb("Error on closing the reader of soft memory limit", e);
-        }
-      } catch (final FileNotFoundException fnfe) {
-        logger.errorNoDb("Can not read memory soft limit for cgroup '%s'", fnfe, memoryCGroup);
-      }
-    } else {
-      if (printSteps)
-        logger.infoNoDb("Can not read memory soft limit for cgroup '%s'", memoryCGroup);
-    }
-
-    return -1;
-  }
-
-  private long fetchCGroupHardMemoryLimit(final File memoryCGroup, final boolean printSteps) {
-    final File hardMemoryCGroupLimit = new File(memoryCGroup, "memory.limit_in_bytes");
-    if (hardMemoryCGroupLimit.exists()) {
-      try {
-        final FileReader memoryLimitReader = new FileReader(hardMemoryCGroupLimit);
-
-        try (final BufferedReader bufferedMemoryLimitReader =
-            new BufferedReader(memoryLimitReader)) {
-          try {
-            final String cgroupMemoryLimitValueStr = bufferedMemoryLimitReader.readLine();
-            try {
-              final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
-
-              if (printSteps)
-                logger.infoNoDb(
-                    "cgroup hard memory limit is %d B/%d MB/%d GB",
-                    cgroupMemoryLimitValue,
-                    convertToMB(cgroupMemoryLimitValue),
-                    convertToGB(cgroupMemoryLimitValue));
-
-              return cgroupMemoryLimitValue;
-            } catch (final NumberFormatException nfe) {
-              if (cgroupMemoryLimitValueStr.matches("\\d+")) {
-                if (printSteps) {
-                  logger.infoNoDb("cgroup hard memory limit is not set");
-                }
-              } else {
-                logger.errorNoDb(
-                    "Can not read memory hard limit for cgroup '%s'", nfe, memoryCGroup);
-              }
-            }
-          } catch (final IOException ioe) {
-            logger.errorNoDb("Can not read memory hard limit for cgroup '%s'", ioe, memoryCGroup);
-          }
-        } catch (final IOException e) {
-          logger.errorNoDb("Error on closing the reader of hard memory limit", e);
-        }
-      } catch (final FileNotFoundException fnfe) {
-        logger.errorNoDb("Can not read memory hard limit for cgroup '%s'", fnfe, memoryCGroup);
-      }
-    } else {
-      if (printSteps) {
-        logger.infoNoDb("Can not read memory hard limit for cgroup '%s'", memoryCGroup);
-      }
-    }
-
-    return -1;
-  }
-
-  private String findMemoryGCGroupPath() {
-    String memoryCGroupPath = null;
-
-    // fetch list of cgroups to which given process belongs to
-    final File cgroupList = new File("/proc/self/cgroup");
-    if (cgroupList.exists()) {
-      try {
-        final FileReader cgroupListReader = new FileReader(cgroupList);
-
-        try (final BufferedReader bufferedCGroupReader = new BufferedReader(cgroupListReader)) {
-          String cgroupData;
-          try {
-            while ((cgroupData = bufferedCGroupReader.readLine()) != null) {
-              final String[] cgroupParts = cgroupData.split(":");
-              // we need only memory controller
-              if (cgroupParts[1].equals("memory")) {
-                memoryCGroupPath = cgroupParts[2];
-              }
-            }
-          } catch (final IOException ioe) {
-            logger.errorNoDb(
-                "Error during reading of details of list of cgroups for the current process, "
-                    + "no restrictions applied by cgroups will be taken into account",
-                ioe);
-            memoryCGroupPath = null;
-          }
-
-        } catch (final IOException e) {
-          logger.errorNoDb(
-              "Error during closing of reader which reads details of list of cgroups for the"
-                  + " current process",
-              e);
-        }
-      } catch (final FileNotFoundException fnfe) {
-        logger.warnNoDb(
-            "Can not retrieve list of cgroups to which process belongs, "
-                + "no restrictions applied by cgroups will be taken into account");
-      }
-    }
-
-    return memoryCGroupPath;
-  }
-
-  private String findMemoryGCRoot() {
-    String memoryCGroupRoot = null;
-
-    // fetch all mount points and find one to which cgroup memory controller is mounted
-    final File procMounts = new File("/proc/mounts");
-    if (procMounts.exists()) {
-      final FileReader mountsReader;
-      try {
-        mountsReader = new FileReader(procMounts);
-        try (BufferedReader bufferedMountsReader = new BufferedReader(mountsReader)) {
-          String fileSystem;
-          while ((fileSystem = bufferedMountsReader.readLine()) != null) {
-            // file system type \s+ mount point \s+ etc.
-            final String[] fsParts = fileSystem.split("\\s+");
-            if (fsParts.length == 0) {
-              continue;
-            }
-
-            final String fsType = fsParts[2];
-            // all cgroup controllers have "cgroup" as file system type
-            if (fsType.equals("cgroup")) {
-              // get mounting path of cgroup
-              final String fsMountingPath = fsParts[1];
-              final String[] fsPathParts = fsMountingPath.split(File.separator);
-              if (fsPathParts[fsPathParts.length - 1].equals("memory")) {
-                memoryCGroupRoot = fsMountingPath;
-              }
-            }
-          }
-        } catch (final IOException e) {
-          logger.errorNoDb("Error during reading a list of mounted file systems", e);
-          memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
-        }
-
-      } catch (final FileNotFoundException fnfe) {
-        memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
-      }
-    }
-
-    if (memoryCGroupRoot == null) {
-      memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
-    }
-
-    return memoryCGroupRoot;
   }
 
   /**
