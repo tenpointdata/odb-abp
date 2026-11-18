@@ -105,9 +105,11 @@ public enum OGlobalConfiguration { // ENVIRONMENT
           + " absolute value in bytes, kilobytes, megabytes or gigabytes. If you set value as 10%"
           + " it means that 10% of memory will not be allocated by OrientDB and will be left to use"
           + " by the rest of applications, if 2g value is provided it means that 2 gigabytes of"
-          + " memory will be left to use by the rest of applications. Default value is 256m",
+          + " memory will be left to use by the rest of applications. It also has to cover the"
+          + " JVM's own memory outside of the heap (metaspace, code cache, thread stacks, garbage"
+          + " collector structures). Default value is 2g",
       String.class,
-      "256m"),
+      "2g"),
 
   DIRECT_MEMORY_POOL_LIMIT(
       "memory.pool.limit",
