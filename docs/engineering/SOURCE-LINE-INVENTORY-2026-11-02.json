@@ -1,0 +1,120 @@
+{
+  "method": "Literal newline count with final unterminated line counted; bytes verified against immutable git blob SHA. Local git cat-file reads repair text-normalized GraphQL responses when needed.",
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".cjs",
+    ".mts",
+    ".cts",
+    ".vue",
+    ".svelte",
+    ".astro",
+    ".html",
+    ".htm",
+    ".css",
+    ".scss",
+    ".sass",
+    ".less"
+  ],
+  "scope": "Every matching tracked file, including upstream, vendored, generated, fixtures and examples; no exemptions were applied.",
+  "any_type_analysis": "Not performed by this line scanner. Confirmed explicit any examples in the report were manually inspected; word matches are not type counts.",
+  "repository": "tenpointdata/odb-abp",
+  "revision": "a13262f53bb373e48f0057a15f408432804b7dcb",
+  "result": {
+    "files_expected": 473,
+    "files_scanned": 473,
+    "over_600": [
+      {
+        "path": "studio/src/controllers/ee-controller.js",
+        "lines": 3330,
+        "sha": "9e193fbc0dc48c42f96ced7121b5c83ecf83462d"
+      },
+      {
+        "path": "studio/src/widgets/orientdb-graphviz.js",
+        "lines": 2336,
+        "sha": "a291a11c023960f2d7203e878965bf334f3769be"
+      },
+      {
+        "path": "studio/src/app/administration/etl/etl.component.ts",
+        "lines": 1901,
+        "sha": "9d12b7b9602e2ff60ae479ba492c801cff6ac16a"
+      },
+      {
+        "path": "studio/src/controllers/graph-controller.js",
+        "lines": 1536,
+        "sha": "fbec0365f7e5f66a1587454d36a2fd1f39bcd578"
+      },
+      {
+        "path": "studio/src/styles/layout.css",
+        "lines": 1400,
+        "sha": "10f5c74aeb06292b79b0a1a7b2bc66bc4edddb6d"
+      },
+      {
+        "path": "studio/src/styles/main.css",
+        "lines": 1346,
+        "sha": "9e3ca0b543e6d00502a106b89778fb7bf07396f9"
+      },
+      {
+        "path": "studio/src/services/database-services.js",
+        "lines": 1262,
+        "sha": "4640b3222460dd47d2bbb70f80a341af94dc4056"
+      },
+      {
+        "path": "studio/src/app/util/graph/d3-graph/OGraph.ts",
+        "lines": 1004,
+        "sha": "935f61e6a89b1a38f3043ef411ebc26cb3a51ad4"
+      },
+      {
+        "path": "studio/src/services/ee-services.js",
+        "lines": 983,
+        "sha": "e1d1c0968025a5eb3defae1a03843a3c50cab3d9"
+      },
+      {
+        "path": "studio/src/controllers/schema-controller.js",
+        "lines": 947,
+        "sha": "e83b2988d492a2ac549f5867bf12a532b8d18b02"
+      },
+      {
+        "path": "studio/src/controllers/database-controller.js",
+        "lines": 851,
+        "sha": "a924e09063d9241cf0980f3f32c25ab4437b6d9a"
+      },
+      {
+        "path": "studio/src/directives/widget.js",
+        "lines": 776,
+        "sha": "59bf176169d46204006a37cae4d2600107da763b"
+      },
+      {
+        "path": "studio/src/app/administration/teleporter/detailpanel/detailpanel.component.ts",
+        "lines": 775,
+        "sha": "2966dc3b235e589ed9ccc9a090babd4ef4c1a05d"
+      },
+      {
+        "path": "studio/src/app/administration/etl/etl.component.html",
+        "lines": 750,
+        "sha": "8189da4b7990ab35ee9f46f1245f6839e6473402"
+      },
+      {
+        "path": "studio/src/controllers/server-controller.js",
+        "lines": 728,
+        "sha": "8ac65645a13962625814a02d2b85627cb74a8784"
+      },
+      {
+        "path": "studio/src/app/util/draggable-sortable/jquery-sortable.js",
+        "lines": 693,
+        "sha": "376880c49b1292e085748494ebcf44aaf1622aa0"
+      },
+      {
+        "path": "studio/src/app/administration/teleporter/detailpanel/detailpanel.component.html",
+        "lines": 654,
+        "sha": "4183109cfd6d36ef85ac47e07eafc59499aae903"
+      }
+    ],
+    "gaps": [],
+    "over_600_count": 17,
+    "complete": true
+  }
+}
