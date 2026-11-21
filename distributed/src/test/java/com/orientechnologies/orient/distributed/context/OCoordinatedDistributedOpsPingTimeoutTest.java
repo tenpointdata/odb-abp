@@ -8,17 +8,20 @@ import org.junit.Test;
 public class OCoordinatedDistributedOpsPingTimeoutTest {
 
   @Test
-  public void timeoutTest() throws InterruptedException {
+  public void timeoutTest() {
     OFlowSimulator flow = new OFlowSimulator(2);
     var node1 = flow.bootNode();
     var node2 = flow.bootNode();
     var node3 = flow.bootNode();
     assertFalse(flow.checkOffline(10));
-    Thread.sleep(10);
+    flow.advanceTime(10);
+    assertFalse(flow.checkOffline(10));
     assertTrue(flow.checkOffline(5));
     flow.pingAll(node1);
     flow.pingAll(node2);
     flow.pingAll(node3);
     assertFalse(flow.checkOffline(5));
+    flow.advanceTime(6);
+    assertTrue(flow.checkOffline(5));
   }
 }

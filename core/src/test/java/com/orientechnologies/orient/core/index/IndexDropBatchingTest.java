@@ -4,10 +4,12 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,13 +18,37 @@ public class IndexDropBatchingTest extends BaseMemoryDatabase {
 
   @Test
   public void testDropIndexCommitsInBatches() {
-    OClass cls = db.getMetadata().getSchema().createClass("Item");
-    cls.createProperty("code", OType.INTEGER).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    checkDropIndexCommitsInBatches(2500, 0);
+  }
 
-    final int entries = 2500;
+  @Test
+  public void testDropIndexCommitsNullKeysInBatches() {
+    checkDropIndexCommitsInBatches(0, 2500);
+  }
+
+  @Test
+  public void testDropIndexCommitsMixedKeysInBatches() {
+    checkDropIndexCommitsInBatches(1000, 1500);
+  }
+
+  private void checkDropIndexCommitsInBatches(int keyedEntries, int nullEntries) {
+    OClass cls = db.getMetadata().getSchema().createClass("Item");
+    OIndex index =
+        cls.createProperty("code", OType.INTEGER)
+            .createIndex(
+                OClass.INDEX_TYPE.NOTUNIQUE, new ODocument().field("ignoreNullValues", false));
+
     db.begin();
-    for (int i = 0; i < entries; i++) db.save(new ODocument("Item").field("code", i));
+    for (int i = 0; i < keyedEntries; i++) {
+      db.save(new ODocument("Item").field("code", i));
+    }
+    for (int i = 0; i < nullEntries; i++) {
+      db.save(new ODocument("Item"));
+    }
     db.commit();
+    try (Stream<ORID> rids = index.getInternal().getRids(null)) {
+      Assert.assertEquals(nullEntries, rids.count());
+    }
 
     AtomicInteger commits = new AtomicInteger();
     ODatabaseListener counter =
@@ -42,7 +68,9 @@ public class IndexDropBatchingTest extends BaseMemoryDatabase {
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) db;
     Assert.assertNull(
         database.getMetadata().getIndexManagerInternal().getIndex(database, "Item.code"));
-    // 2500 entries in batches of 1000 is 3 commits plus the final one
-    Assert.assertTrue("commits: " + commits.get(), commits.get() <= entries / 1000 + 2);
+    int expectedBatches = (keyedEntries + 999) / 1000 + (nullEntries + 999) / 1000;
+    // The DROP INDEX statement can add its own commit.
+    Assert.assertTrue("commits: " + commits.get(), commits.get() >= expectedBatches);
+    Assert.assertTrue("commits: " + commits.get(), commits.get() <= expectedBatches + 1);
   }
 }

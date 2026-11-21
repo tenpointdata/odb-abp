@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -76,6 +77,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
   protected static final String CONFIG_MAP_RID = "mapRid";
   private static final String CONFIG_CLUSTERS = "clusters";
+  private static final int DROP_BATCH_SIZE = 1000;
   protected final OStorage storage;
   private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
@@ -579,22 +581,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         //noinspection ObjectAllocationInLoop
         try {
           try (final Stream<ORawPair<Object, ORID>> stream = stream()) {
-            ODatabaseDocumentInternal database = getDatabase();
-            Iterator<ORawPair<Object, ORID>> iterator = stream.iterator();
-            long count = 0;
-            database.begin();
-            try {
-              while (iterator.hasNext()) {
-                ORawPair<Object, ORID> pair = iterator.next();
-                remove(pair.first, pair.second);
-                if (++count % 1000 == 0) {
-                  database.commit();
-                  database.begin();
-                }
-              }
-            } finally {
-              database.commit();
-            }
+            removeEntriesInBatches(stream.iterator(), pair -> remove(pair.first, pair.second));
           }
         } catch (OIndexEngineException e) {
           throw e;
@@ -606,7 +593,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         try {
           if (!this.getDefinition().isNullValuesIgnored()) {
             try (Stream<ORID> stream = getRids(null)) {
-              stream.forEach((rid) -> remove(null, rid));
+              removeEntriesInBatches(stream.iterator(), rid -> remove(null, rid));
             }
           }
         } catch (OIndexEngineException e) {
@@ -623,6 +610,29 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
 
     removeValuesContainer();
+  }
+
+  private <T> void removeEntriesInBatches(Iterator<T> entries, Consumer<T> removeEntry) {
+    if (!entries.hasNext()) {
+      return;
+    }
+
+    ODatabaseDocumentInternal database = getDatabase();
+    int count = 0;
+    database.begin();
+    try {
+      do {
+        if (count == DROP_BATCH_SIZE) {
+          database.commit();
+          database.begin();
+          count = 0;
+        }
+        removeEntry.accept(entries.next());
+        count++;
+      } while (entries.hasNext());
+    } finally {
+      database.commit();
+    }
   }
 
   public String getName() {

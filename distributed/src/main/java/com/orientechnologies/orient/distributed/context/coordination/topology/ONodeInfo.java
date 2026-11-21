@@ -1,17 +1,28 @@
 package com.orientechnologies.orient.distributed.context.coordination.topology;
 
+import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
+
 public class ONodeInfo {
+  private final LongSupplier nanoTime;
   private volatile long lastReceivedNotification;
 
   public ONodeInfo() {
-    lastReceivedNotification = System.nanoTime();
+    this(System::nanoTime);
+  }
+
+  public ONodeInfo(LongSupplier nanoTime) {
+    this.nanoTime = nanoTime;
+    lastReceivedNotification = nanoTime.getAsLong();
   }
 
   public void ping() {
-    lastReceivedNotification = System.nanoTime();
+    lastReceivedNotification = nanoTime.getAsLong();
   }
 
   public boolean awayMoreThan(long timeInMills) {
-    return lastReceivedNotification + timeInMills * 1000000 < System.nanoTime();
+    // nanoTime values are compared by their difference, they can overflow
+    return nanoTime.getAsLong() - lastReceivedNotification
+        > TimeUnit.MILLISECONDS.toNanos(timeInMills);
   }
 }
