@@ -1,6 +1,6 @@
 # OrientDB ABP handoff
 
-**Last updated:** 2026-11-20, prepared the index-drop review fixes on current develop.
+**Last updated:** 2026-11-20, recorded the merged index-drop fixes and verified Java distribution.
 
 **Start here:** `ej handoff brief` (or the MCP tool `get_handoff` with `brief=true`) is the short way in: what to pick up, who is working here, and where each section of this file is. Without those tools, read Current state, Triage and Known issues and gotchas, then the issue you take.
 
@@ -33,14 +33,14 @@ This public fork maintains OrientDB for downstream use. The `develop` branch fol
 
 [PR #8](https://github.com/tenpointdata/odb-abp/pull/8) merged into `develop` at `bffac2b2`. The landed tree matches the synthetic merge that passed hosted Java 17, 21 and 25, CodeQL and Dependency Review. The [Community distribution](https://github.com/tenpointdata/odb-abp/actions/runs/44856959376/artifacts/14689436490) matched GitHub's SHA-256, the embedded source commit, both inner archive checksums and format checks.
 
-[PR #9](https://github.com/tenpointdata/odb-abp/pull/9) has an isolated candidate built on `develop` `bffac2b2`. It keeps the simulated monotonic clock used by the distributed ping test and batches null-key index removals through the same path as ordinary keys. With 2,500 indexed nulls the in-memory fixture recorded 2,502 commits before the fix and four after. With 1,000 ordinary keys and 1,500 indexed nulls it recorded 1,503 before and four after. The ordinary-key case also recorded four. The test checks indexed null membership before the drop and checks both a lower and upper bound on commits.
+[PR #9](https://github.com/tenpointdata/odb-abp/pull/9) merged into `develop` at `f0940435`. It keeps the simulated monotonic clock used by the distributed ping test and batches null-key index removals through the same path as ordinary keys. With 2,500 indexed nulls the in-memory fixture recorded 2,502 commits before the fix and four after. With 1,000 ordinary keys and 1,500 indexed nulls it recorded 1,503 before and four after. The ordinary-key case also recorded four. The test checks indexed null membership before the drop and checks both a lower and upper bound on commits.
 
-The focused topology, ping and index-drop suites passed all 16 tests on JDK 21 with Java 17-compatible changed classes over the verified distribution libraries. The hosted package and distribution workflows are inherited unchanged. PR #9 needs fresh hosted checks because its previous Studio download failure was on an older test merge.
+The focused topology, ping and index-drop suites passed all 16 tests on JDK 21 with Java 17-compatible changed classes over the verified distribution libraries. The landed tree `07da853fd64c32b25aeb34fa2c75bd823aad0612` matches test merge `082b1512`. [Hosted Java 17, 21 and 25](https://github.com/tenpointdata/odb-abp/actions/runs/44863255170), CodeQL and Dependency Review passed. The [Community artifact](https://github.com/tenpointdata/odb-abp/actions/runs/44863255170/artifacts/14691693562) matched the GitHub SHA-256, embedded source commit and both inner checksums. The TAR.GZ and ZIP passed integrity checks.
 
 ## 5. Triage
 
 **Agents can pick up:**
-- [#9](https://github.com/tenpointdata/odb-abp/pull/9) — S — Check the exact reviewed candidate in hosted Java CI and verify its Community distribution.
+- [#10](https://github.com/tenpointdata/odb-abp/issues/10) — M — Qualify hosted Java 25 server lifecycle and fixture cleanup with the full Java matrix.
 - [#5](https://github.com/tenpointdata/odb-abp/issues/5) — S — Run Studio build, typecheck and ETL smoke test on its development branch.
 
 **Blocked or waiting:**
@@ -53,7 +53,7 @@ Use JDK 17 or later and Maven 3.7 or later. Run `mvn -B package -P all --file po
 ## 7. Open work
 
 - [#1](https://github.com/tenpointdata/odb-abp/issues/1) — An owned release destination remains to be identified if the fork should publish outside GitHub Actions.
-- [#9](https://github.com/tenpointdata/odb-abp/pull/9) — Fresh hosted Java checks and distribution verification.
+- [#10](https://github.com/tenpointdata/odb-abp/issues/10) — Hosted Java 25 server lifecycle and fixture cleanup qualification.
 - [#2](https://github.com/tenpointdata/odb-abp/issues/2), [#5](https://github.com/tenpointdata/odb-abp/issues/5), [#6](https://github.com/tenpointdata/odb-abp/issues/6), [#7](https://github.com/tenpointdata/odb-abp/issues/7) — Studio ETL editor qualification and fixes.
 
 ## 8. Known issues and gotchas
