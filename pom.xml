@@ -135,11 +135,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <repository>
-            <id>maven2-repository.dev.java.net</id>
-            <name>Java.net repository</name>
-            <url>https://download.java.net/maven/2</url>
-        </repository>
     </repositories>
 
     <properties>
@@ -210,6 +205,10 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>buildnumber-maven-plugin</artifactId>
                     <version>3.3.1</version>
+                    <configuration>
+                        <!-- allow building from a source archive, outside of a git checkout -->
+                        <revisionOnScmFailure>unknown</revisionOnScmFailure>
+                    </configuration>
                 </plugin>
 
                 <plugin>

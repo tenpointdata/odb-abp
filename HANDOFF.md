@@ -1,6 +1,6 @@
 # OrientDB ABP handoff
 
-**Last updated:** 2026-11-12, Java CI and distribution validation.
+**Last updated:** 2026-11-20, reconciled fork CI and distribution validation with current develop.
 
 **Start here:** `ej handoff brief` (or the MCP tool `get_handoff` with `brief=true`) is the short way in: what to pick up, who is working here, and where each section of this file is. Without those tools, read Current state, Triage and Known issues and gotchas, then the issue you take.
 
@@ -31,22 +31,24 @@ This public fork maintains OrientDB for downstream use. The `develop` branch fol
 
 ## 4. Current state
 
-On 2026-11-12, the CI change was prepared from `develop` at `a13262f5`. It removes publishing from routine Java validation, adds Community distribution provenance, and keeps the inherited manual Maven Central release available to upstream on tags. [PR #4](https://github.com/tenpointdata/odb-abp/pull/4) holds the separate operations candidate, where the original Maven jobs passed on Java 17, 21 and 25 and CodeQL passed. Dependency Review reports that the repository dependency graph is unavailable. Upgrade, backup, and container handling review findings remain open in PR #4.
+[PR #8](https://github.com/tenpointdata/odb-abp/pull/8) now has an isolated conflict resolution against `develop` `e3669bea`. It preserves the Java 21 and 25 jobs, runner concurrency and limits, flaky-test summaries, and failure reports that landed with [PR #4](https://github.com/tenpointdata/odb-abp/pull/4). The Java 17 job packages the Community distribution and records both checksums and the source commit. Validation runs without publishing credentials. The manual release workflow is restricted to tag dispatches in the upstream repository.
+
+At the historical PR head `e8a9ee25`, hosted Java 24, Java 25, and Java 17 distribution passed. The Java 21 job was cancelled. The downloaded Community artifacts matched both archive hashes and the synthetic merge commit. The current-base candidate passed Actionlint 1.7.11 and local workflow contract checks, including both flaky-test summary steps and all nine archive cardinality combinations. The exact candidate still needs hosted Java 17, 21, and 25 checks.
+
+The operations overhaul and scale fixes [#4](https://github.com/tenpointdata/odb-abp/pull/4) and [#11](https://github.com/tenpointdata/odb-abp/pull/11) are on `develop`. The current [PR #9](https://github.com/tenpointdata/odb-abp/pull/9) test merge adds the distributed ping timing changes. Index deletion for ordinary keys landed with #11, and null-key batching remains under review on #9.
 
 ## 5. Triage
 
 **Agents can pick up:**
+- [#1](https://github.com/tenpointdata/odb-abp/issues/1) — S — Run the current-base PR #8 validation and verify the exact Community distribution receipt.
 - [#5](https://github.com/tenpointdata/odb-abp/issues/5) — S — Run Studio build, typecheck and ETL smoke test on its development branch.
-
-**Needs a human:**
-- [#1](https://github.com/tenpointdata/odb-abp/issues/1) — M — Identify the owned artifact destination and publishing identity before configuring fork releases.
 
 **Blocked or waiting:**
 - [#2](https://github.com/tenpointdata/odb-abp/issues/2) — M — Studio change acceptance waits on #5.
 
 ## 6. Set up, run, test, deploy
 
-Use JDK 17 or later and Maven 3.7 or later. Run `mvn -B package -P all --file pom.xml` for the credential-free package and test path. Java CI runs the standard reactor on JDK 21, 24 and 25 and the distribution reactor on JDK 17. The distribution job uploads the Community tarball, zip, `SHA256SUMS` and `SOURCE_COMMIT` together as an Actions artifact retained for 14 days. Verify the SHA and `shasum -a 256 -c SHA256SUMS` before using it. The artifacts are available to people with Actions access to this public repository.
+Use JDK 17 or later and Maven 3.7 or later. Run `mvn -B package -P all --file pom.xml` for the credential-free package and test path. Java CI runs the standard reactor on JDK 21 and 25 and the distribution reactor on JDK 17. The distribution job uploads the Community tarball, zip, `SHA256SUMS` and `SOURCE_COMMIT` together as an Actions artifact retained for 14 days. Verify the SHA and `shasum -a 256 -c SHA256SUMS` before using it. The artifacts are available to people with Actions access to this public repository.
 
 ## 7. Open work
 
@@ -55,7 +57,7 @@ Use JDK 17 or later and Maven 3.7 or later. Run `mvn -B package -P all --file po
 
 ## 8. Known issues and gotchas
 
-The upgrade audit in PR #4 describes a standalone 3.2.42 compatibility and rollback rehearsal. Cluster qualification and upgrade timing need separate evidence before deployment. The project POM retains upstream Maven coordinates and dependency resolution. [PR #3](https://github.com/tenpointdata/odb-abp/pull/3) contains the draft engineering guide. [PR #4](https://github.com/tenpointdata/odb-abp/pull/4) contains the operations candidate.
+The merged upgrade audit in PR #4 describes a standalone 3.2.42 compatibility and rollback rehearsal. Cluster qualification and upgrade timing need separate evidence before deployment. The project POM retains upstream Maven coordinates and dependency resolution. [PR #3](https://github.com/tenpointdata/odb-abp/pull/3) contains the draft engineering guide.
 
 ## 9. Decisions
 

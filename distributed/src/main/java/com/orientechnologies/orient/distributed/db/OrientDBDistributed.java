@@ -1038,8 +1038,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return this.nodeState;
   }
 
+  /**
+   * @return the coordinated operations, or {@code null} when the server doesn't run distributed: the
+   *     community distribution always ships this module, so standalone servers use this context too.
+   */
   public OCoordinatedDistributedOps getOps() {
-    return getNodeState().getOps();
+    final ONodeState state = getNodeState();
+    return state != null ? state.getOps() : null;
   }
 
   @Override

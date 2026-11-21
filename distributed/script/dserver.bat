@@ -71,6 +71,11 @@ set WWW_PATH=%ORIENTDB_HOME%/www
 set ORIENTDB_SETTINGS=-Dprofiler.enabled=true
 set JAVA_OPTS_SCRIPT= -Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9
 
+rem Lucene's SIMD distance functions (vector and full-text indexes) need the incubating Vector API.
+rem Added only when this Java has the module, so runtimes without it still start.
+%JAVA% --add-modules jdk.incubator.vector -version >nul 2>&1
+if %ERRORLEVEL% EQU 0 set JAVA_OPTS_SCRIPT=%JAVA_OPTS_SCRIPT% --add-modules jdk.incubator.vector
+
 rem TO DEBUG ORIENTDB SERVER RUN IT WITH THESE OPTIONS:
 rem -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044
 rem AND ATTACH TO THE CURRENT HOST, PORT 1044

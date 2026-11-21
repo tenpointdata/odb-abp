@@ -89,6 +89,16 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     final long jvmMaxMemory = OMemory.getCappedRuntimeMaxMemory(2L * 1024 * 1024 * 1024 /* 2GB */);
     logger.infoNoDb("JVM can use maximum %dMB of heap memory", jvmMaxMemory / (1024 * 1024));
 
+    // Pages released by the disk cache are kept in the direct memory pool, up to its limit, and
+    // never returned to the OS: that memory is in use on top of the cache.
+    final long directMemoryPool =
+        (long) OConfiguration.global().directMemoryPoolLimit()
+            * OConfiguration.global().diskCachePageSize()
+            * 1024;
+    logger.infoNoDb(
+        "%dMB of direct memory pool ('%s') is kept outside of the disk cache",
+        directMemoryPool / (1024 * 1024), OGlobalConfiguration.DIRECT_MEMORY_POOL_LIMIT.getKey());
+
     long diskCacheInMB;
     if (osMemory.insideContainer) {
       logger.infoNoDb(
@@ -98,12 +108,12 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
           OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
 
       diskCacheInMB =
-          (calculateMemoryLeft(
-                      osMemory.memoryLimit,
-                      OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey(),
-                      OConfiguration.global().memoryLeftToContainer())
-                  - jvmMaxMemory)
-              / (1024 * 1024);
+          calculateDiskCacheSizeInMB(
+              osMemory.memoryLimit,
+              OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey(),
+              OConfiguration.global().memoryLeftToContainer(),
+              jvmMaxMemory,
+              directMemoryPool);
     } else {
       logger.infoNoDb(
           "Because OrientDB is running outside a container %s of memory will be left "
@@ -112,12 +122,12 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
           OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey());
 
       diskCacheInMB =
-          (calculateMemoryLeft(
-                      osMemory.memoryLimit,
-                      OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey(),
-                      OConfiguration.global().memoryLeftToOs())
-                  - jvmMaxMemory)
-              / (1024 * 1024);
+          calculateDiskCacheSizeInMB(
+              osMemory.memoryLimit,
+              OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey(),
+              OConfiguration.global().memoryLeftToOs(),
+              jvmMaxMemory,
+              directMemoryPool);
     }
 
     if (diskCacheInMB > 0) {
@@ -145,7 +155,20 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     }
   }
 
-  private long calculateMemoryLeft(long memoryLimit, String parameter, String memoryLeft) {
+  /** What remains of the memory limit for the disk cache, in megabytes; may be negative. */
+  long calculateDiskCacheSizeInMB(
+      long memoryLimit,
+      String parameter,
+      String memoryLeft,
+      long jvmMaxMemory,
+      long directMemoryPool) {
+    return (calculateMemoryLeft(memoryLimit, parameter, memoryLeft)
+            - jvmMaxMemory
+            - directMemoryPool)
+        / (1024 * 1024);
+  }
+
+  long calculateMemoryLeft(long memoryLimit, String parameter, String memoryLeft) {
     if (memoryLeft == null) {
       warningInvalidMemoryLeftValue(parameter, null);
       return memoryLimit;
@@ -174,7 +197,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
         return memoryLimit;
       }
 
-      return (int) ((memoryLimit * (100.0 - percent)) / 100.0);
+      return (long) ((memoryLimit * (100.0 - percent)) / 100.0);
     } else if (lastChar == 'b') {
       final String bytesValue = memoryLeft.substring(0, memoryLeft.length() - 1);
       final long bytes;
@@ -251,6 +274,6 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   private void warningInvalidMemoryLeftValue(String parameter, String memoryLeft) {
     logger.warnNoDb(
         "Invalid value of '%s' parameter ('%s') memory limit will not be decreased",
-        memoryLeft, parameter);
+        parameter, memoryLeft);
   }
 }

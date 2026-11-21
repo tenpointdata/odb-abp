@@ -155,28 +155,9 @@
             <groupId>com.github.jnr</groupId>
             <artifactId>jnr-posix</artifactId>
             <version>3.2.5</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm-commons</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm-analysis</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm-tree</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm-util</artifactId>
-                </exclusion>
-            </exclusions>
+            <!-- jnr-ffi needs ASM to bind native libc. Without it jnr-posix silently falls back to
+                 a pure Java emulation that can't read process limits (getrlimit), so the open
+                 files limit of the disk cache falls back to 512. -->
         </dependency>
         <dependency>
             <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
