@@ -6,12 +6,12 @@ Upstream fork of OrientDB; identical to upstream develop at the review snapshot.
 
 - Reviewed source: `a13262f53bb373e48f0057a15f408432804b7dcb` on `develop`.
 - Upstream: [orientechnologies/orientdb](https://github.com/orientechnologies/orientdb).
-- At the review snapshot, the fork had 0 fork-only and 0 upstream-only commits relative to `a13262f53bb373e48f0057a15f408432804b7dcb`. [Read the pinned comparison context](https://github.com/tenpointdata/odb-abp/compare/develop...orientechnologies:develop). These counts are historical evidence, not a claim about today's latest release.
-- Preserve upstream license/contribution links, but add fork role, exact imported SHA, nonpublishing validation path, and accepted patch/upgrade policy. Distinguish Java 17 build requirement from stale contributor text.
+- The November 2 review recorded identical upstream and fork tips. Both repositories resolve `a13262f53bb373e48f0057a15f408432804b7dcb` to the same source tree. [Upstream snapshot](https://github.com/orientechnologies/orientdb/commit/a13262f53bb373e48f0057a15f408432804b7dcb) · [Fork snapshot](https://github.com/tenpointdata/odb-abp/commit/a13262f53bb373e48f0057a15f408432804b7dcb)
+- Keep upstream licenses and contribution links with their source. Record future fork patches and upstream imports with their exact revision and compatibility evidence. The fork’s release boundary is tracked in [#1](https://github.com/tenpointdata/odb-abp/issues/1).
 
 ## Setup and native verification
 
-pom.xml targets Java 17; CI validates JDK 17/21/24/25; CONTRIBUTING still says JDK 8 and needs reconciliation. Studio requires yarn/webpack; existing scripts do not provide a standalone typecheck/test command.
+The current Maven build targets Java 17, and the hosted workflow checks JDK 17, 21 and 25. Studio uses Yarn and webpack. Its package provides build and watch commands. [Contributor setup](../../CONTRIBUTING.md) · [Hosted test workflow](../../.github/workflows/tests.yml)
 
 | Command | Owning source | Review execution |
 | --- | --- | --- |
@@ -19,7 +19,9 @@ pom.xml targets Java 17; CI validates JDK 17/21/24/25; CONTRIBUTING still says J
 | mvn -B package -P all --file pom.xml | .github/workflows/tests.yml | Not run |
 | yarn build (from studio) | studio/package.json | Not run |
 
-Native toolchains and inherited workflow enablement remain unchanged. Source-rule inspection in this review was local only; the PR does not distribute additional inspection code or introduce validation dependencies. Full inventory debt remains open. Native type/contract tests, targeted source-size review and the linked remediation issues remain the validation path; missing or incomplete checks are not a pass.
+### Changed-source standards
+
+List changed files with `git diff --name-only --diff-filter=ACMR <base>...HEAD`. For each changed path in the source scope defined by [AGENTS.md](../../AGENTS.md), count physical lines with `awk 'END { print NR }' "$path"`. Review changed TypeScript and embedded TypeScript for explicit `any` type uses, including annotations, assertions, type arguments and declaration files. Record the base SHA, checked paths, line counts, type uses and any unverified embedded regions. Use the Studio build for applicable Studio changes. [Studio ETL follow-up #2](https://github.com/tenpointdata/odb-abp/issues/2)
 
 ## Architecture and trust boundaries
 

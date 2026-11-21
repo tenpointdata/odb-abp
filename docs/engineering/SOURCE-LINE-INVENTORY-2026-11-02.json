@@ -1,5 +1,5 @@
 {
-  "method": "Literal newline count with final unterminated line counted; bytes verified against immutable git blob SHA. Local git cat-file reads repair text-normalized GraphQL responses when needed.",
+  "method": "Count literal newlines in each immutable Git blob at revision and count a final unterminated line. The report records blob IDs and paths for files above the threshold.",
   "extensions": [
     ".ts",
     ".tsx",

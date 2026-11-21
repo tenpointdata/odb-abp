@@ -37,7 +37,7 @@ This public fork maintains OrientDB for downstream use. The `develop` branch fol
 
 The focused topology, ping and index-drop suites passed all 16 tests on JDK 21 with Java 17-compatible changed classes over the verified distribution libraries. The landed tree `07da853fd64c32b25aeb34fa2c75bd823aad0612` matches test merge `082b1512`. [Hosted Java 17, 21 and 25](https://github.com/tenpointdata/odb-abp/actions/runs/44863255170), CodeQL and Dependency Review passed. The [Community artifact](https://github.com/tenpointdata/odb-abp/actions/runs/44863255170/artifacts/14691693562) matched the GitHub SHA-256, embedded source commit and both inner checksums. The TAR.GZ and ZIP passed integrity checks.
 
-The [fork engineering guide](docs/engineering/README.md) and its November 2 source review document the earlier immutable snapshot. [PR #3](https://github.com/tenpointdata/odb-abp/pull/3) carries that snapshot and the fork standards. [PR #12](https://github.com/tenpointdata/odb-abp/pull/12) confirms the landed #8/#9 state and hosted checks. The fork still has no owned release destination under [#1](https://github.com/tenpointdata/odb-abp/issues/1).
+The [fork engineering guide](docs/engineering/README.md) links the [November 2 source review](docs/engineering/REVIEW-2026-11-02.md) and its immutable snapshot. [PR #3](https://github.com/tenpointdata/odb-abp/pull/3) carries that snapshot and the fork standards. [PR #12](https://github.com/tenpointdata/odb-abp/pull/12) confirms the landed #8/#9 state and hosted checks. The fork still has no owned release destination under [#1](https://github.com/tenpointdata/odb-abp/issues/1).
 
 ## 5. Triage
 

@@ -36,7 +36,7 @@ Hand-offs move like a Zed Delta thread: **fork** when you start (`ej handoff for
 <!-- tenpointdata-engineering-standards:v1 -->
 ## Engineering standards
 
-- Keep every TypeScript and web-language code file at or below **600 physical lines**. Split by cohesive responsibility; do not minify, compress, or remove useful context to meet the limit. Fix generators when their checked-in output exceeds the limit.
+- Keep every tracked file in the [inventory’s web source scope](docs/engineering/SOURCE-LINE-INVENTORY-2026-11-02.json), plus SVG and MDX source, at or below **600 physical lines**. The scope includes checked-in generated, vendored, fixture and example files. Split by cohesive responsibility; do not minify, compress, or remove useful context to meet the limit. Fix generators when their checked-in output exceeds the limit.
 - Keep code in other languages concise and well organized, with cohesive modules and clear responsibilities.
 - Avoid TypeScript `any`, including assertions, generic defaults and declaration files. Reuse canonical domain types and schemas; accept `unknown` at untrusted boundaries and validate/narrow it. Keep strict type checking; do not bypass checks with `@ts-ignore`, `@ts-nocheck` or disabled lint rules.
 - Start from the problem, constraints and invariants. Inspect existing libraries, shared types and related project capabilities before building. Extend sound implementations instead of creating parallel ones.
@@ -56,5 +56,5 @@ Hand-offs move like a Zed Delta thread: **fork** when you start (`ej handoff for
 - Record the source revision, exact checks and results. Distinguish proposed, implemented, locally tested, merged, deployed and accepted behavior; never infer one from another.
 - Keep setup, architecture and operational instructions near their owning code. Link the canonical issue for next work instead of maintaining contradictory task lists.
 - For a new defect or unresolved design decision, provide evidence, impact, smallest next action and acceptance criteria. Identify hypotheses and untested boundaries explicitly; keep credentials and sensitive data out of issues and logs.
-- Before publishing, run applicable source-standards, type, contract and workflow checks using the repository's documented commands. Existing debt remains visible and does not waive the rules for changed code.
+- Before publishing, use the [changed-source standards procedure](docs/engineering/README.md#changed-source-standards) and run the applicable type, contract and workflow checks. Existing debt remains visible and does not waive the rules for changed code.
 <!-- /tenpointdata-engineering-standards:v1 -->
