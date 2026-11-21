@@ -36,10 +36,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # LTS releases; 17, the minimum supported release, is covered by build-and-snapshot
+        # LTS releases; 17, the minimum supported release, is covered by distribution
         java-version: ['21', '25']
     steps:
     - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
     - name: Set up JDK ${{matrix.java-version}}
       uses: actions/setup-java@v6
       with:
@@ -77,27 +79,22 @@ jobs:
         path: '**/target/surefire-reports/'
         retention-days: 14
 
-
-  build-and-snapshot:
+  distribution:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
         java-version: ['17']
-    env:
-      # snapshots are published only from branch builds of a repository that has the credentials
-      PUBLISH: ${{ github.event_name != 'pull_request' && secrets.OSSRH_USERNAME != '' }}
     steps:
     - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
     - name: Set up JDK ${{matrix.java-version}}
       uses: actions/setup-java@v6
       with:
         java-version: ${{matrix.java-version}}
         distribution: 'temurin'
-        server-id: central-snapshots
-        server-username: MAVEN_USERNAME
-        server-password: MAVEN_PASSWORD
         # Step that does that actual cache save and restore
     - name: Cache
       uses: actions/cache@v6
@@ -107,15 +104,32 @@ jobs:
        restore-keys: |
         ${{ runner.os }}-maven-
     - name: Build with Maven
-      if: env.PUBLISH != 'true'
       run: mvn package -P all --file pom.xml
-    # deploy runs the same build and tests before publishing, so the code is built only once
-    - name: Build with Maven and publish snapshot
-      if: env.PUBLISH == 'true'
-      run: mvn deploy -P all --file pom.xml
-      env:
-        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+    - name: Record distribution provenance
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd packages/community/target
+        shopt -s nullglob
+        tarballs=(orientdb-community-*.tar.gz)
+        zips=(orientdb-community-*.zip)
+        if [[ ${#tarballs[@]} -ne 1 || ${#zips[@]} -ne 1 ]]; then
+          echo 'Expected one Community tarball and one zip' >&2
+          exit 1
+        fi
+        shasum -a 256 -- "${tarballs[0]}" "${zips[0]}" > SHA256SUMS
+        printf '%s\n' "$GITHUB_SHA" > SOURCE_COMMIT
+    - name: Upload tested Community distribution
+      uses: actions/upload-artifact@v7
+      with:
+        name: orientdb-community-${{ github.sha }}
+        path: |
+          packages/community/target/orientdb-community-*.tar.gz
+          packages/community/target/orientdb-community-*.zip
+          packages/community/target/SHA256SUMS
+          packages/community/target/SOURCE_COMMIT
+        if-no-files-found: error
+        retention-days: 14
     - name: List flaky tests
       if: always()
       shell: python3 {0}
