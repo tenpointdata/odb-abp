@@ -116,6 +116,15 @@ public class OBaseExpression extends OMathExpression {
   }
 
   public Collection<Object> getIndexKey(OCommandContext ctx) {
+    if (modifier != null) {
+      // The modifier applies to the value, as in execute(), not to the keys built from it:
+      // date('...').asLong() is the long of the date, not asLong() of a collection of keys.
+      final Object value = execute((OResult) null, ctx);
+      if (value instanceof Collection) {
+        return (Collection<Object>) value;
+      }
+      return Collections.singleton(value);
+    }
     Object result = null;
     if (number != null) {
       result = Collections.singleton(number.getValue());
@@ -132,9 +141,6 @@ public class OBaseExpression extends OMathExpression {
       } else {
         result = Collections.singleton(parVal);
       }
-    }
-    if (modifier != null) {
-      result = modifier.execute(null, result, ctx);
     }
     return (Collection<Object>) result;
   }
